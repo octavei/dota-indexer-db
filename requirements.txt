@@ -1,0 +1,4 @@
+mysql-connector==2.2.9
+mysql-connector-python==8.3.0
+SQLAlchemy==2.0.25
+typing_extensions==4.9.0
