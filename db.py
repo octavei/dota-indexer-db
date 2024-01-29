@@ -13,7 +13,7 @@ class DotaDB:
         self.deploy_table = self._deploy_table()
         self.metadata.create_all(bind=self.engine)
 
-    # 直接一个资产表 程序启动直接创建
+    # tick资产表
     def _currency_table(self, tick: str):
         return Table(tick + "_currency", self.metadata,
                      Column('user', String(64), nullable=False, primary_key=True),
@@ -22,18 +22,21 @@ class DotaDB:
                      extend_existing=True
                      )
 
+    # 获取用户tick资产
     def get_user_currency_balance(self, tick: str, user: str):
         table = self._currency_table(tick)
         se = table.select().where(table.c.user == user)
         result = self.session.execute(se).fetchone()
         return result
 
+    # 获取tick总发行量
     def get_total_supply(self, tick: str):
         table = self._currency_table(tick)
         se = func.sum(table.c.balance)
         result = self.session.execute(se).fetchone()
         return result
 
+    # 更新（或者插入）用户tick资产
     def insert_or_update_user_currency_balance(self, tick: str, balance_infos: list[dict]):
 
         with self.session.begin_nested():
@@ -68,6 +71,7 @@ class DotaDB:
                      extend_existing=True
                      )
 
+    # 插入用户tick转账记录
     def insert_transfer_info(self, tick: str, transfer_infos: list[dict]):
         with self.session.begin_nested():
             for transfer_info in transfer_infos:
@@ -78,7 +82,7 @@ class DotaDB:
                 stmt = insert(self._transfer_table(tick)).values(**transfer_info)
                 self.session.execute(stmt)
 
-    # 部署表  程序启动直接创建
+    # 部署表
     def _deploy_table(self):
         return Table("deploy", self.metadata,
                      Column('id', Integer, autoincrement=True),
@@ -105,11 +109,13 @@ class DotaDB:
                      extend_existing=True
                      )
 
+    # 获取tick部署信息
     def get_deploy_info(self, tick: str):
         se = self.deploy_table.select().where(self.deploy_table.c.tick == tick)
         result = self.session.execute(se).fetchall()
         return result
 
+    # 插入部署信息
     def insert_deploy_info(self, deploy_info: dict):
         with self.session.begin_nested():
             stmt = insert(self.deploy_table).values(**deploy_info)
@@ -136,6 +142,7 @@ class DotaDB:
                      extend_existing=True
                      )
 
+    # 插入用户mint记录
     def insert_mint_info(self, tick: str, mint_infos: list[dict]):
         with self.session.begin_nested():
             for mint_info in mint_infos:
@@ -146,6 +153,7 @@ class DotaDB:
                 stmt = insert(self._mint_table(mint_info["tick"])).values(**mint_info)
                 self.session.execute(stmt)
 
+    # 部署成功后 给tick添加对应的表
     def create_tables_for_new_tick(self, tick: str):
         # 创建currency表
         currency_table = self._currency_table(tick)
