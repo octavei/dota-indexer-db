@@ -92,12 +92,14 @@ class DotaDB:
         mint_table = self._mint_table(tick)
         self.metadata.create_all(bind=self.engine)
 
-    def insert_or_update(self, ):
+    def insert_or_update_user_currency_balance(self, balance_info: dict):
+        if balance_info.get("tick") is None:
+            raise Exception("tick is None")
         with self.session.begin():
-            pass
-            # stmt = insert(table).values(id=id, name=name)
-            # stmt = stmt.on_duplicate_key_update(name=stmt.inserted.name)
-            # self.session.execute(stmt)
+            table = self._currency_table(balance_info["tick"])
+            stmt = insert(table).values(balance_info)
+            stmt = stmt.on_duplicate_key_update(balance_info)
+            self.session.execute(stmt)
 
     # def select(self):
     #     se = self.table.select()
