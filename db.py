@@ -9,7 +9,8 @@ class DotaDB:
         self.engine = create_engine(db_url, echo=True)
         self.metadata = MetaData()
         self.session = Session(bind=self.engine)
-        # self.metadata.create_all(bind=self.engine)
+        self.deploy_table = self._deploy_table()
+        self.metadata.create_all(bind=self.engine)
 
     # 直接一个资产表 程序启动直接创建
     def _currency_table(self, tick: str):
@@ -32,7 +33,7 @@ class DotaDB:
                      Column("batchall_index", Integer, default=0),
                      Column("remark_index", Integer, default=0),
 
-                     Column("p", String(8), primary_key=True, server_default="dot-20", nullable=False),
+                     Column("p", String(8), server_default="dot-20", nullable=False),
                      Column('op', String(16), server_default="deploy", nullable=False),
                      Column("tick", String(8), primary_key=True, nullable=False),
                      Column('decimal', Integer, default=18),
@@ -44,6 +45,16 @@ class DotaDB:
                      Column("lim", DECIMAL(46, 18), default=0),
                      Column("admin", String(64)),
                      )
+
+    def get_deploy_info(self, tick: str):
+        se = self.deploy_table.select().where(self.deploy_table.c.tick == tick)
+        result = self.session.execute(se).fetchall()
+        return result
+
+    def insert_deploy_info(self, deploy_info: dict):
+        with self.session.begin():
+            stmt = insert(self.deploy_table).values(**deploy_info)
+            self.session.execute(stmt)
 
     # mint table
     def _mint_table(self, tick: str):
@@ -63,6 +74,15 @@ class DotaDB:
                      Column("to", String(64), nullable=False),
                      Column("lim", DECIMAL(46, 18), default=0),
                      )
+
+    def insert_mint_info(self, mint_info: dict):
+        if mint_info.get("tock") is None:
+            raise Exception("tock is None")
+        if mint_info.get("lim") == 0:
+            raise Exception("lim is 0")
+        with self.session.begin():
+            stmt = insert(self._mint_table(mint_info["tick"])).values(**mint_info)
+            self.session.execute(stmt)
 
     def create_tables_for_new_tick(self, tick: str):
         # 创建currency表
@@ -84,8 +104,8 @@ class DotaDB:
     #     print("r:", result)
     #
 
-    def delete(self, table_name: str):
-        self.session.execute(self.table.delete())
+    # def delete(self, table_name: str):
+    #     self.session.execute(self.table.delete())
 
     def close(self):
         self.session.close()
