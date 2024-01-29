@@ -8,6 +8,7 @@ class DotaDB:
     def __init__(self, db_url):
         self.engine = create_engine(db_url, echo=True)
         self.metadata = MetaData()
+        self.p = "dot-20"
         self.session = Session(bind=self.engine)
         self.deploy_table = self._deploy_table()
         self.metadata.create_all(bind=self.engine)
@@ -33,7 +34,7 @@ class DotaDB:
                      Column("batchall_index", Integer, default=0),
                      Column("remark_index", Integer, default=0),
 
-                     Column("p", String(8), server_default="dot-20", nullable=False),
+                     Column("p", String(8), server_default=self.p, nullable=False),
                      Column('op', String(16), server_default="deploy", nullable=False),
                      Column("tick", String(8), primary_key=True, nullable=False),
                      Column('decimal', Integer, default=18),
@@ -68,7 +69,7 @@ class DotaDB:
                      Column("batchall_index", Integer, default=0, primary_key=True),
                      Column("remark_index", Integer, default=0, primary_key=True),
 
-                     Column("p", String(8), server_default="dot-20", nullable=False),
+                     Column("p", String(8), server_default=self.p, nullable=False),
                      Column('op', String(16), server_default="mint", nullable=False),
                      Column("tick", String(8), server_default=tick, nullable=False),
                      Column("to", String(64), nullable=False),
@@ -76,8 +77,8 @@ class DotaDB:
                      )
 
     def insert_mint_info(self, mint_info: dict):
-        if mint_info.get("tock") is None:
-            raise Exception("tock is None")
+        if mint_info.get("tick") is None:
+            raise Exception("tick is None")
         if mint_info.get("lim") == 0:
             raise Exception("lim is 0")
         with self.session.begin():
