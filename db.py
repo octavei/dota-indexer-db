@@ -76,14 +76,18 @@ class DotaDB:
                      Column("lim", DECIMAL(46, 18), default=0),
                      )
 
-    def insert_mint_info(self, mint_info: dict):
-        if mint_info.get("tick") is None:
-            raise Exception("tick is None")
-        if mint_info.get("lim") == 0:
-            raise Exception("lim is 0")
+    def insert_mint_info(self, mint_infos: list[dict]):
+        tick = None
+        if len(mint_infos) != 0:
+            tick = mint_infos[0].get("tick")
         with self.session.begin():
-            stmt = insert(self._mint_table(mint_info["tick"])).values(**mint_info)
-            self.session.execute(stmt)
+            for mint_info in mint_infos:
+                if mint_info.get("tick") is None or mint_info.get("tick") != tick:
+                    raise Exception("tick is None or not equal")
+                if mint_info.get("lim") == 0:
+                    raise Exception("lim is 0")
+                stmt = insert(self._mint_table(mint_info["tick"])).values(**mint_info)
+                self.session.execute(stmt)
 
     def create_tables_for_new_tick(self, tick: str):
         # 创建currency表
