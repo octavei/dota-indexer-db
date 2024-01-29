@@ -21,6 +21,37 @@ class DotaDB:
                      Column('balance', DECIMAL(46, 18), default=0, nullable=False),
                      )
 
+    def _transfer_table(self, tick: str):
+        return Table(tick + "_transfer", self.metadata,
+                     Column('id', Integer, autoincrement=True),
+
+                     Column("user", String(64), nullable=False),
+
+                     Column("block_height", Integer, nullable=False, primary_key=True),
+                     Column("block_hash", String(64), nullable=False, primary_key=True),
+                     Column("extrinsic_index", Integer, nullable=False, primary_key=True),
+                     Column("extrinsic_hash", String(64), nullable=False, primary_key=True),
+                     Column("batchall_index", Integer, default=0, primary_key=True),
+                     Column("remark_index", Integer, default=0, primary_key=True),
+
+                     Column("amount", DECIMAL(46, 18), default=0, nullable=False),
+                     Column("from", String(64), nullable=False),
+                     Column("to", String(64), nullable=False),
+                     Column("tick", String(8), server_default=tick, nullable=False),
+                     Column("amt", DECIMAL(46, 18), default=0),
+                     Column("type", Integer, default=0, nullable=False), # 0是transfer 1是transferFrom
+                     )
+
+    def insert_transfer_info(self, tick: str, transfer_infos: list[dict]):
+        with self.session.begin():
+            for transfer_info in transfer_infos:
+                if transfer_info.get("tick") != tick:
+                    raise Exception("tick is None or not equal")
+                if transfer_info.get("amount") == 0:
+                    raise Exception("amount is 0")
+                stmt = insert(self._transfer_table(tick)).values(**transfer_info)
+                self.session.execute(stmt)
+
     # 部署表  程序启动直接创建
     def _deploy_table(self):
         return Table("deploy", self.metadata,
@@ -66,6 +97,7 @@ class DotaDB:
                      Column("block_height", Integer, nullable=False, primary_key=True),
                      Column("block_hash", String(64), nullable=False),
                      Column("extrinsic_index", Integer, nullable=False, primary_key=True),
+                     Column("extrinsic_hash", String(64), nullable=False),
                      Column("batchall_index", Integer, default=0, primary_key=True),
                      Column("remark_index", Integer, default=0, primary_key=True),
 
