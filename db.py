@@ -76,13 +76,10 @@ class DotaDB:
                      Column("lim", DECIMAL(46, 18), default=0),
                      )
 
-    def insert_mint_info(self, mint_infos: list[dict]):
-        tick = None
-        if len(mint_infos) != 0:
-            tick = mint_infos[0].get("tick")
+    def insert_mint_info(self, tick: str, mint_infos: list[dict]):
         with self.session.begin():
             for mint_info in mint_infos:
-                if mint_info.get("tick") is None or mint_info.get("tick") != tick:
+                if mint_info.get("tick") != tick:
                     raise Exception("tick is None or not equal")
                 if mint_info.get("lim") == 0:
                     raise Exception("lim is 0")
