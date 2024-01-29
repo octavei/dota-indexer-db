@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, Column, Integer, String, MetaData, Table, text, CheckConstraint, BigInteger, \
-    DECIMAL, DateTime
+    DECIMAL, DateTime, func
 from sqlalchemy.orm import declarative_base, Session
 from sqlalchemy.dialects.mysql import insert
 
@@ -19,7 +19,32 @@ class DotaDB:
                      Column('user', String(64), nullable=False, primary_key=True),
                      Column('tick', String(8), nullable=False, server_default=tick, primary_key=True),
                      Column('balance', DECIMAL(46, 18), default=0, nullable=False),
+                     extend_existing=True
                      )
+
+    def get_user_currency_balance(self, tick: str, user: str):
+        table = self._currency_table(tick)
+        se = table.select().where(table.c.user == user)
+        result = self.session.execute(se).fetchone()
+        return result
+
+    def get_total_supply(self, tick: str):
+        table = self._currency_table(tick)
+        se = func.sum(table.c.balance)
+        result = self.session.execute(se).fetchone()
+        return result
+
+    def insert_or_update_user_currency_balance(self, tick: str, balance_infos: list[dict]):
+
+        with self.session.begin_nested():
+            for balance_info in balance_infos:
+                if balance_info.get("tick") != tick:
+                    raise Exception("tick is None or not equal")
+                # with self.session.begin_nested():
+                table = self._currency_table(balance_info["tick"])
+                stmt = insert(table).values(balance_info)
+                stmt = stmt.on_duplicate_key_update(balance_info)
+                self.session.execute(stmt)
 
     def _transfer_table(self, tick: str):
         return Table(tick + "_transfer", self.metadata,
@@ -40,10 +65,11 @@ class DotaDB:
                      Column("tick", String(8), server_default=tick, nullable=False),
                      Column("amt", DECIMAL(46, 18), default=0),
                      Column("type", Integer, default=0, nullable=False), # 0是transfer 1是transferFrom
+                     extend_existing=True
                      )
 
     def insert_transfer_info(self, tick: str, transfer_infos: list[dict]):
-        with self.session.begin():
+        with self.session.begin_nested():
             for transfer_info in transfer_infos:
                 if transfer_info.get("tick") != tick:
                     raise Exception("tick is None or not equal")
@@ -76,6 +102,7 @@ class DotaDB:
                      Column("max", DECIMAL(46, 18), default=0),
                      Column("lim", DECIMAL(46, 18), default=0),
                      Column("admin", String(64)),
+                     extend_existing=True
                      )
 
     def get_deploy_info(self, tick: str):
@@ -84,7 +111,7 @@ class DotaDB:
         return result
 
     def insert_deploy_info(self, deploy_info: dict):
-        with self.session.begin():
+        with self.session.begin_nested():
             stmt = insert(self.deploy_table).values(**deploy_info)
             self.session.execute(stmt)
 
@@ -106,10 +133,11 @@ class DotaDB:
                      Column("tick", String(8), server_default=tick, nullable=False),
                      Column("to", String(64), nullable=False),
                      Column("lim", DECIMAL(46, 18), default=0),
+                     extend_existing=True
                      )
 
     def insert_mint_info(self, tick: str, mint_infos: list[dict]):
-        with self.session.begin():
+        with self.session.begin_nested():
             for mint_info in mint_infos:
                 if mint_info.get("tick") != tick:
                     raise Exception("tick is None or not equal")
@@ -124,15 +152,6 @@ class DotaDB:
         # 创建mint表
         mint_table = self._mint_table(tick)
         self.metadata.create_all(bind=self.engine)
-
-    def insert_or_update_user_currency_balance(self, balance_info: dict):
-        if balance_info.get("tick") is None:
-            raise Exception("tick is None")
-        with self.session.begin():
-            table = self._currency_table(balance_info["tick"])
-            stmt = insert(table).values(balance_info)
-            stmt = stmt.on_duplicate_key_update(balance_info)
-            self.session.execute(stmt)
 
     # def select(self):
     #     se = self.table.select()
@@ -151,3 +170,21 @@ if __name__ == "__main__":
     url = 'mysql+mysqlconnector://root:116000@localhost/wjy'
     db = DotaDB(url)
     db.create_tables_for_new_tick("dota")
+    # db.insert_or_update_user_currency_balance({"user": "1", "balance": 1, "tick": "dota"})
+    try:
+        with db.session.begin():
+            # 如果是begin 都会回滚
+            # 如果是begin_nested 外层不会回滚
+            # begin_nested内层raise 外层不一定回滚 只有这个raise到外层 才会回滚
+            # begin 只要内层出现raise 不管处不处理 整个begin都回滚
+            db.insert_or_update_user_currency_balance("dota", [{"user": "82", "balance": 100, "tick": "dota"}])
+            try:
+                db.insert_or_update_user_currency_balance("dota", [{"user": "92", "balance": "haha", "tick": "dota"}])
+            except Exception as e:
+                print(e)
+    except Exception as e:
+        print("err:", e)
+    total = db.get_total_supply("dota")
+    amt = db.get_user_currency_balance("dota", "82")
+    print(total)
+    print(amt)
