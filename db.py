@@ -22,6 +22,83 @@ class DotaDB:
                      extend_existing=True
                      )
 
+    # tick索引器状态表（更新到了哪个高度）状态表不能区分tick来爬 因为token之间完全是有可能相互交互的
+    def _indexer_status_table(self):
+        return Table("indexer_status", self.metadata,
+                     # 要测这个是否是不可更
+                     Column('p', String(8), primary_key=True, server_default=self.p, nullable=False),
+                     Column('indexer_height', Integer, nullable=False, default=0),
+                     Column('crawler_height', Integer, nullable=False, default=0),
+                     extend_existing=True
+                     )
+
+    def _approve_table(self, tick: str):
+        return Table(tick + "_approve", self.metadata,
+                     Column('id', Integer, autoincrement=True),
+                     Column("user", String(64), nullable=False, primary_key=True),
+                     Column("from", String(64), nullable=False, primary_key=True),
+                     Column("tick", String(8), server_default=tick, nullable=False, primary_key=True),
+                     Column("amount", DECIMAL(46, 18), default=0, nullable=False),
+                     extend_existing=True
+                     )
+
+    # 更新或者插入用户授权记录
+    def insert_or_update_user_approve(self, tick: str, approve_infos: list[dict]):
+        with self.session.begin_nested():
+            for approve_info in approve_infos:
+                if approve_info.get("tick") != tick:
+                    raise Exception("tick is None or not equal")
+                if approve_info.get("amount") == 0:
+                    raise Exception("amount is 0")
+                stmt = insert(self._approve_table(tick)).values(**approve_info)
+                stmt = stmt.on_duplicate_key_update(approve_info)
+                self.session.execute(stmt)
+
+    # 授权历史记录表
+    def _approve_history_table(self, tick: str):
+        return Table(tick + "_approve_history", self.metadata,
+                     Column('id', Integer, autoincrement=True),
+                     Column("user", String(64), nullable=False, primary_key=True),
+                     Column("from", String(64), nullable=False, primary_key=True),
+                     Column("tick", String(8), server_default=tick, nullable=False, primary_key=True),
+                     Column("amount", DECIMAL(46, 18), default=0, nullable=False),
+                     Column("block_height", Integer, nullable=False),
+                     Column("block_hash", String(64), nullable=False),
+                     Column("extrinsic_index", Integer, nullable=False),
+                     Column("batchall_index", Integer, default=0),
+                     Column("remark_index", Integer, default=0),
+                     extend_existing=True
+                     )
+
+    # 插入授权记录
+    def insert_approve_history(self, tick: str, approve_infos: list[dict]):
+        with self.session.begin_nested():
+            for approve_info in approve_infos:
+                if approve_info.get("tick") != tick:
+                    raise Exception("tick is None or not equal")
+                stmt = insert(self._approve_history_table(tick)).values(**approve_info)
+                self.session.execute(stmt)
+
+    # 获取授权金额
+    def get_user_approve_amount(self, tick: str, user: str, from_: str):
+        table = self._approve_table(tick)
+        se = table.select().where(table.c.user == user).where(table.c.from_ == from_)
+        result = self.session.execute(se).fetchone()
+        return result
+
+    # 插入或者更新索引器状态
+    def insert_or_update_indexer_status(self, status: dict):
+        with self.session.begin_nested():
+            stmt = insert(self._indexer_status_table()).values(**status)
+            stmt = stmt.on_duplicate_key_update(status)
+            self.session.execute(stmt)
+
+    # 获取索引器状态
+    def get_indexer_status(self, p: str):
+        se = self._indexer_status_table().select().where(self._indexer_status_table().c.p == p)
+        result = self.session.execute(se).fetchone()
+        return result
+
     # 获取用户tick资产
     def get_user_currency_balance(self, tick: str, user: str):
         table = self._currency_table(tick)
