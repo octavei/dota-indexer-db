@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, Column, Integer, String, MetaData, Table, 
     DECIMAL, DateTime, func
 from sqlalchemy.orm import declarative_base, Session
 from sqlalchemy.dialects.mysql import insert
-
+# from dotaindexerdb import *
 
 class DotaDB:
     def __init__(self, db_url):
