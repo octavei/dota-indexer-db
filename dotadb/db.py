@@ -66,7 +66,7 @@ class DotaDB:
                      Column("tick", String(8), server_default=tick, nullable=False, primary_key=True),
                      Column("amount", DECIMAL(46, 18), nullable=False),
                      Column("block_height", Integer, nullable=False),
-                     Column("block_hash", String(64), nullable=False),
+                     Column("block_hash", String(66), nullable=False),
                      Column("extrinsic_index", Integer, nullable=False),
                      Column("batchall_index", Integer, nullable=False),
                      Column("remark_index", Integer, nullable=False),
@@ -136,9 +136,9 @@ class DotaDB:
                      Column("user", String(64), nullable=False),
 
                      Column("block_height", Integer, nullable=False, primary_key=True),
-                     Column("block_hash", String(64), nullable=False, primary_key=True),
+                     Column("block_hash", String(66), nullable=False, primary_key=True),
                      Column("extrinsic_index", Integer, nullable=False, primary_key=True),
-                     Column("extrinsic_hash", String(64), nullable=False, primary_key=True),
+                     Column("extrinsic_hash", String(66), nullable=False, primary_key=True),
                      Column("batchall_index", Integer, primary_key=True),
                      Column("remark_index", Integer, primary_key=True),
 
@@ -169,7 +169,7 @@ class DotaDB:
 
                      # 用于标记这个部署事件在链上哪个区块高度哪个位置
                      Column("block_height", Integer, nullable=False),
-                     Column("block_hash", String(64), nullable=False),
+                     Column("block_hash", String(66), nullable=False),
                      Column("extrinsic_index", Integer, nullable=False),
                      Column("batchall_index", Integer, nullable=False),
                      Column("remark_index", Integer, nullable=False),
@@ -207,9 +207,9 @@ class DotaDB:
 
                      Column("singer", String(64), nullable=False, primary_key=True),
                      Column("block_height", Integer, nullable=False, primary_key=True),
-                     Column("block_hash", String(64), nullable=False),
+                     Column("block_hash", String(66), nullable=False),
                      Column("extrinsic_index", Integer, nullable=False, primary_key=True),
-                     Column("extrinsic_hash", String(64), nullable=False),
+                     Column("extrinsic_hash", String(66), nullable=False),
                      Column("batchall_index", Integer, default=0, primary_key=True),
                      Column("remark_index", Integer, default=0, primary_key=True),
 
@@ -268,6 +268,7 @@ class DotaDB:
             self.session.execute(self.indexer_status_table.delete())
             self.session.execute(self.deploy_table.delete())
             self.session.commit()
+
     def close(self):
         self.session.close()
 
