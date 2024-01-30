@@ -40,7 +40,7 @@ class DotaDB:
                      Column("user", String(64), nullable=False, primary_key=True),
                      Column("from", String(64), nullable=False, primary_key=True),
                      Column("tick", String(8), server_default=tick, nullable=False, primary_key=True),
-                     Column("amount", DECIMAL(46, 18), default=0, nullable=False),
+                     Column("amount", DECIMAL(46, 18), nullable=False),
                      extend_existing=True
                      )
 
@@ -50,8 +50,6 @@ class DotaDB:
             for approve_info in approve_infos:
                 if approve_info.get("tick") != tick:
                     raise Exception("tick is None or not equal")
-                if approve_info.get("amount") == 0:
-                    raise Exception("amount is 0")
                 stmt = insert(self._approve_table(tick)).values(**approve_info)
                 stmt = stmt.on_duplicate_key_update(approve_info)
                 self.session.execute(stmt)
@@ -63,12 +61,12 @@ class DotaDB:
                      Column("user", String(64), nullable=False, primary_key=True),
                      Column("from", String(64), nullable=False, primary_key=True),
                      Column("tick", String(8), server_default=tick, nullable=False, primary_key=True),
-                     Column("amount", DECIMAL(46, 18), default=0, nullable=False),
+                     Column("amount", DECIMAL(46, 18), nullable=False),
                      Column("block_height", Integer, nullable=False),
                      Column("block_hash", String(64), nullable=False),
                      Column("extrinsic_index", Integer, nullable=False),
-                     Column("batchall_index", Integer, default=0),
-                     Column("remark_index", Integer, default=0),
+                     Column("batchall_index", Integer, nullable=False),
+                     Column("remark_index", Integer, nullable=False),
                      extend_existing=True
                      )
 
@@ -138,14 +136,13 @@ class DotaDB:
                      Column("block_hash", String(64), nullable=False, primary_key=True),
                      Column("extrinsic_index", Integer, nullable=False, primary_key=True),
                      Column("extrinsic_hash", String(64), nullable=False, primary_key=True),
-                     Column("batchall_index", Integer, default=0, primary_key=True),
-                     Column("remark_index", Integer, default=0, primary_key=True),
+                     Column("batchall_index", Integer, primary_key=True),
+                     Column("remark_index", Integer, primary_key=True),
 
-                     Column("amount", DECIMAL(46, 18), default=0, nullable=False),
+                     Column("amount", DECIMAL(46, 18), nullable=False),
                      Column("from", String(64), nullable=False),
                      Column("to", String(64), nullable=False),
                      Column("tick", String(8), server_default=tick, nullable=False),
-                     Column("amt", DECIMAL(46, 18), default=0),
                      Column("type", Integer, default=0, nullable=False), # 0是transfer 1是transferFrom
                      extend_existing=True
                      )
@@ -171,19 +168,19 @@ class DotaDB:
                      Column("block_height", Integer, nullable=False),
                      Column("block_hash", String(64), nullable=False),
                      Column("extrinsic_index", Integer, nullable=False),
-                     Column("batchall_index", Integer, default=0),
-                     Column("remark_index", Integer, default=0),
+                     Column("batchall_index", Integer, nullable=False),
+                     Column("remark_index", Integer, nullable=False),
 
                      Column("p", String(8), server_default=self.p, nullable=False),
                      Column('op', String(16), server_default="deploy", nullable=False),
                      Column("tick", String(8), primary_key=True, nullable=False),
                      Column('decimal', Integer, default=18),
                      Column("mode", String(8), default="fair", nullable=False),
-                     Column("amt", DECIMAL(46, 18), default=0),
-                     Column("start", Integer, default=0),
-                     Column("end", Integer, default=0),
-                     Column("max", DECIMAL(46, 18), default=0),
-                     Column("lim", DECIMAL(46, 18), default=0),
+                     Column("amt", DECIMAL(46, 18)),
+                     Column("start", Integer, nullable=False),
+                     Column("end", Integer),
+                     Column("max", DECIMAL(46, 18)),
+                     Column("lim", DECIMAL(46, 18)),
                      Column("admin", String(64)),
                      extend_existing=True
                      )
