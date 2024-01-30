@@ -34,8 +34,7 @@ class DotaDB:
     def _indexer_status_table(self):
         return Table("indexer_status", self.metadata,
                      # 要测这个是否是不可更
-                     Column('p', String(8), primary_key=True, default=self.p, nullable=False,
-                            server_onupdate=text(self.p)),
+                     Column('p', String(8), primary_key=True, default=self.p, nullable=False),
                      Column('indexer_height', Integer, nullable=False),
                      Column('crawler_height', Integer, nullable=False),
                      extend_existing=True
@@ -224,14 +223,14 @@ class DotaDB:
                      Column("block_hash", String(66), nullable=False),
                      Column("extrinsic_index", Integer, nullable=False, primary_key=True),
                      Column("extrinsic_hash", String(66), nullable=False),
-                     Column("batchall_index", Integer, default=0, primary_key=True),
-                     Column("remark_index", Integer, default=0, primary_key=True),
+                     Column("batchall_index", Integer, primary_key=True),
+                     Column("remark_index", Integer, primary_key=True),
 
                      Column("p", String(8), default=self.p, nullable=False),
                      Column('op', String(16), default="mint", nullable=False),
                      Column("tick", String(8), default=tick, nullable=False),
                      Column("to", String(64), nullable=False, primary_key=True),
-                     Column("lim", DECIMAL(64, 18), default=0),
+                     Column("lim", DECIMAL(64, 18)),
                      UniqueConstraint("block_height", "extrinsic_index", "batchall_index", "remark_index"),
                      extend_existing=True
                      )
