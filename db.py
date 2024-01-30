@@ -11,6 +11,7 @@ class DotaDB:
         self.p = "dot-20"
         self.session = Session(bind=self.engine)
         self.deploy_table = self._deploy_table()
+        self.indexer_status = self._indexer_status_table()
         self.metadata.create_all(bind=self.engine)
 
     # tick资产表
@@ -26,11 +27,13 @@ class DotaDB:
     def _indexer_status_table(self):
         return Table("indexer_status", self.metadata,
                      # 要测这个是否是不可更
-                     Column('p', String(8), primary_key=True, server_default=self.p, nullable=False),
+                     Column('p', String(8), primary_key=True, server_default=self.p, nullable=False,
+                            server_onupdate=text(self.p)),
                      Column('indexer_height', Integer, nullable=False, default=0),
                      Column('crawler_height', Integer, nullable=False, default=0),
                      extend_existing=True
                      )
+
 
     def _approve_table(self, tick: str):
         return Table(tick + "_approve", self.metadata,
@@ -236,7 +239,11 @@ class DotaDB:
         currency_table = self._currency_table(tick)
         # 创建mint表
         mint_table = self._mint_table(tick)
-        self.metadata.create_all(bind=self.engine)
+        approve_table = self._approve_table(tick)
+        approve_history_table = self._approve_history_table(tick)
+        transfer_table = self._transfer_table(tick)
+        self.metadata.create_all(bind=self.engine, tables=[currency_table, mint_table, approve_table,
+                                                           approve_history_table, transfer_table])
 
     # def select(self):
     #     se = self.table.select()
@@ -258,6 +265,7 @@ if __name__ == "__main__":
     # db.insert_or_update_user_currency_balance({"user": "1", "balance": 1, "tick": "dota"})
     try:
         with db.session.begin():
+            db.insert_or_update_indexer_status({"indexer_height": 2, "crawler_height": 1})
             # 如果是begin 都会回滚
             # 如果是begin_nested 外层不会回滚
             # begin_nested内层raise 外层不一定回滚 只有这个raise到外层 才会回滚
@@ -273,3 +281,4 @@ if __name__ == "__main__":
     amt = db.get_user_currency_balance("dota", "82")
     print(total)
     print(amt)
+    print(db.get_indexer_status("dot-20"))
