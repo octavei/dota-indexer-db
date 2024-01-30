@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='dota-db',
-    version='0.1.0',
+    version='0.1.1',
     packages=["dotadb"],
     install_requires=[
         'websocket-client>=0.57.0,<2',
