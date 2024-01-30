@@ -1,9 +1,9 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='dota-db',
+    name='dotadb',
     version='0.1.2',
-    packages=["dota_db"],
+    packages=find_packages(),
     install_requires=[
         'websocket-client>=0.57.0,<2',
         'base58==2.1.1',
