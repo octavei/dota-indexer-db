@@ -2,8 +2,9 @@ from sqlalchemy import create_engine, Column, Integer, String, MetaData, Table, 
     DECIMAL, DateTime, func
 from sqlalchemy.orm import declarative_base, Session
 from sqlalchemy.dialects.mysql import insert
-
-__all__ = ["DotaDB"]
+# import dotadb
+#
+# __all__ = ["DotaDB"]
 
 
 class DotaDB:
