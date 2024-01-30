@@ -26,7 +26,7 @@ class DotaDB:
         return Table(tick + "_currency", self.metadata,
                      Column('user', String(64), nullable=False, primary_key=True),
                      Column('tick', String(8), nullable=False, default=tick, primary_key=True),
-                     Column('balance', DECIMAL(46, 18), nullable=False),
+                     Column('balance', DECIMAL(64, 18), nullable=False),
                      extend_existing=True
                      )
 
@@ -47,7 +47,7 @@ class DotaDB:
                      Column("user", String(64), nullable=False, primary_key=True),
                      Column("from_address", String(64), nullable=False, primary_key=True),
                      Column("tick", String(8), default=tick, nullable=False),
-                     Column("amount", DECIMAL(46, 18), nullable=False),
+                     Column("amount", DECIMAL(64, 18), nullable=False),
                      UniqueConstraint("user", "from_address"),
                      extend_existing=True
                      )
@@ -74,7 +74,7 @@ class DotaDB:
                      Column("user", String(64), nullable=False, primary_key=True),
                      Column("from", String(64), nullable=False, primary_key=True),
                      Column("tick", String(8), default=tick, nullable=False),
-                     Column("amount", DECIMAL(46, 18), nullable=False),
+                     Column("amount", DECIMAL(64, 18), nullable=False),
                      
                      Column("block_height", Integer, nullable=False, primary_key=True),
                      Column("block_hash", String(66), nullable=False),
@@ -154,7 +154,7 @@ class DotaDB:
                      Column("batchall_index", Integer, nullable=False,primary_key=True),
                      Column("remark_index", Integer, nullable=False,primary_key=True),
 
-                     Column("amount", DECIMAL(46, 18), nullable=False),
+                     Column("amount", DECIMAL(64, 18), nullable=False),
                      Column("from", String(64), nullable=False, primary_key=True),
                      Column("to", String(64), nullable=False, primary_key=True),
                      Column("tick", String(8), default=tick, nullable=False),
@@ -192,11 +192,11 @@ class DotaDB:
                      Column("tick", String(8), primary_key=True, nullable=False),
                      Column('decimal', Integer, default=18),
                      Column("mode", String(8), default="fair", nullable=False),
-                     Column("amt", DECIMAL(46, 18)),
+                     Column("amt", DECIMAL(64, 18)),
                      Column("start", Integer, nullable=False),
                      Column("end", Integer),
-                     Column("max", DECIMAL(46, 18)),
-                     Column("lim", DECIMAL(46, 18)),
+                     Column("max", DECIMAL(64, 18)),
+                     Column("lim", DECIMAL(64, 18)),
                      Column("admin", String(64)),
                      UniqueConstraint("block_height", "extrinsic_index", "batchall_index", "remark_index"),
                      extend_existing=True
@@ -231,7 +231,7 @@ class DotaDB:
                      Column('op', String(16), default="mint", nullable=False),
                      Column("tick", String(8), default=tick, nullable=False),
                      Column("to", String(64), nullable=False, primary_key=True),
-                     Column("lim", DECIMAL(46, 18), default=0),
+                     Column("lim", DECIMAL(64, 18), default=0),
                      UniqueConstraint("block_height", "extrinsic_index", "batchall_index", "remark_index"),
                      extend_existing=True
                      )
@@ -316,10 +316,10 @@ if __name__ == "__main__":
     time.sleep(5)
     db.session.commit()
     db.create_tables_for_new_tick("dota")
-
-    # db.insert_or_update_user_currency_balance("dota", [{"user": "1", "balance": 1, "tick": "dota"}])
-    # print("#####"*100)
-    # db.session.commit()
+    amount = 10**32
+    db.insert_or_update_user_currency_balance("dota", [{"user": "1", "balance": amount, "tick": "dota"}])
+    print("#####"*100)
+    db.session.commit()
     #
     # try:
     #     with db.session.begin():
@@ -337,9 +337,9 @@ if __name__ == "__main__":
     #     print("err:", e)
     #     print("***"*100)
     # total = db.get_total_supply("dota")
-    # amt = db.get_user_currency_balance("dota", "82")
+    amt = db.get_user_currency_balance("dota", "1")
     # print(total)
-    # print(amt)
+    print(amt)
     # print("###"*100)
     # print(db.get_indexer_status("dot-20"))
     #
@@ -351,4 +351,4 @@ if __name__ == "__main__":
         db.insert_or_update_user_approve("dota", [{"user": "ssss", "from_address": "ddd", "tick": "dota", "amount": 20}])
 
     print(db.get_user_approve_amount("dota", "ssss", "ddd"))
-    print(db.get_all_approve_info("dota"))
+    # print(db.get_all_approve_info("dota"))
