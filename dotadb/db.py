@@ -39,7 +39,7 @@ class DotaDB:
 
     def _approve_table(self, tick: str):
         return Table(tick + "_approve", self.metadata,
-                     Column('id', Integer, autoincrement=True),
+                     Column('id', Integer, autoincrement=True, nullable=False),
                      Column("user", String(64), nullable=False, primary_key=True),
                      Column("from", String(64), nullable=False, primary_key=True),
                      Column("tick", String(8), server_default=tick, nullable=False, primary_key=True),
@@ -60,7 +60,7 @@ class DotaDB:
     # 授权历史记录表
     def _approve_history_table(self, tick: str):
         return Table(tick + "_approve_history", self.metadata,
-                     Column('id', Integer, autoincrement=True),
+                     Column('id', Integer, autoincrement=True, nullable=False),
                      Column("user", String(64), nullable=False, primary_key=True),
                      Column("from", String(64), nullable=False, primary_key=True),
                      Column("tick", String(8), server_default=tick, nullable=False, primary_key=True),
@@ -131,7 +131,7 @@ class DotaDB:
 
     def _transfer_table(self, tick: str):
         return Table(tick + "_transfer", self.metadata,
-                     Column('id', Integer, autoincrement=True),
+                     Column('id', Integer, autoincrement=True, nullable=False),
 
                      Column("user", String(64), nullable=False),
 
@@ -164,7 +164,7 @@ class DotaDB:
     # 部署表
     def _deploy_table(self):
         return Table("deploy", self.metadata,
-                     Column('id', Integer, autoincrement=True),
+                     Column('id', Integer, autoincrement=True, nullable=False),
                      Column("deployer", String(64), nullable=False),
 
                      # 用于标记这个部署事件在链上哪个区块高度哪个位置
@@ -203,7 +203,7 @@ class DotaDB:
     # mint table
     def _mint_table(self, tick: str):
         return Table(tick + "_mint", self.metadata,
-                     Column('id', Integer, autoincrement=True),
+                     Column('id', Integer, autoincrement=True, nullable=False),
 
                      Column("singer", String(64), nullable=False, primary_key=True),
                      Column("block_height", Integer, nullable=False, primary_key=True),
@@ -277,10 +277,13 @@ if __name__ == "__main__":
     url = 'mysql+mysqlconnector://root:116000@localhost/wjy'
     db = DotaDB(url)
     db.create_tables_for_new_tick("dota")
-    # db.insert_or_update_user_currency_balance({"user": "1", "balance": 1, "tick": "dota"})
+    db.insert_or_update_user_currency_balance("dota", [{"user": "1", "balance": 1, "tick": "dota"}])
+    print("#####"*100)
+    db.session.commit()
+
     try:
         with db.session.begin():
-            db.insert_or_update_indexer_status({"indexer_height": 2, })
+            db.insert_or_update_indexer_status({"indexer_height": 2, "crawler_height": 100})
             # 如果是begin 都会回滚
             # 如果是begin_nested 外层不会回滚
             # begin_nested内层raise 外层不一定回滚 只有这个raise到外层 才会回滚
@@ -292,6 +295,7 @@ if __name__ == "__main__":
                 print(e)
     except Exception as e:
         print("err:", e)
+        print("***"*100)
     total = db.get_total_supply("dota")
     amt = db.get_user_currency_balance("dota", "82")
     print(total)
