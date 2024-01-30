@@ -11,7 +11,7 @@ class DotaDB:
         self.p = "dot-20"
         self.session = Session(bind=self.engine)
         self.deploy_table = self._deploy_table()
-        self.indexer_status = self._indexer_status_table()
+        self.indexer_status_table = self._indexer_status_table()
         self.metadata.create_all(bind=self.engine)
 
     # tick资产表
@@ -19,7 +19,7 @@ class DotaDB:
         return Table(tick + "_currency", self.metadata,
                      Column('user', String(64), nullable=False, primary_key=True),
                      Column('tick', String(8), nullable=False, server_default=tick, primary_key=True),
-                     Column('balance', DECIMAL(46, 18), default=0, nullable=False),
+                     Column('balance', DECIMAL(46, 18), nullable=False),
                      extend_existing=True
                      )
 
@@ -29,11 +29,10 @@ class DotaDB:
                      # 要测这个是否是不可更
                      Column('p', String(8), primary_key=True, server_default=self.p, nullable=False,
                             server_onupdate=text(self.p)),
-                     Column('indexer_height', Integer, nullable=False, default=0),
-                     Column('crawler_height', Integer, nullable=False, default=0),
+                     Column('indexer_height', Integer, nullable=False),
+                     Column('crawler_height', Integer, nullable=False),
                      extend_existing=True
                      )
-
 
     def _approve_table(self, tick: str):
         return Table(tick + "_approve", self.metadata,
@@ -251,9 +250,24 @@ class DotaDB:
     #     print("r:", result)
     #
 
-    # def delete(self, table_name: str):
-    #     self.session.execute(self.table.delete())
-
+    # 删除所有tick有关的表格
+    def delete_all_tick_table(self, tick: str):
+        # 创建currency表
+        with self.session.begin_nested():
+            currency_table = self._currency_table(tick)
+            # 创建mint表
+            mint_table = self._mint_table(tick)
+            approve_table = self._approve_table(tick)
+            approve_history_table = self._approve_history_table(tick)
+            transfer_table = self._transfer_table(tick)
+            self.session.execute(currency_table.delete())
+            self.session.execute(mint_table.delete())
+            self.session.execute(approve_table.delete())
+            self.session.execute(approve_history_table.delete())
+            self.session.execute(transfer_table.delete())
+            self.session.execute(self.indexer_status_table.delete())
+            self.session.execute(self.deploy_table.delete())
+            self.session.commit()
     def close(self):
         self.session.close()
 
@@ -265,7 +279,7 @@ if __name__ == "__main__":
     # db.insert_or_update_user_currency_balance({"user": "1", "balance": 1, "tick": "dota"})
     try:
         with db.session.begin():
-            db.insert_or_update_indexer_status({"indexer_height": 2, "crawler_height": 1})
+            db.insert_or_update_indexer_status({"indexer_height": 2, })
             # 如果是begin 都会回滚
             # 如果是begin_nested 外层不会回滚
             # begin_nested内层raise 外层不一定回滚 只有这个raise到外层 才会回滚
@@ -282,3 +296,4 @@ if __name__ == "__main__":
     print(total)
     print(amt)
     print(db.get_indexer_status("dot-20"))
+    db.delete_all_tick_table("dota")

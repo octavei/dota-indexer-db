@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='dota-indexer-db',
+    name='dota_indexer_db',
     version='0.1.0',
     packages=find_packages(),
     install_requires=[
