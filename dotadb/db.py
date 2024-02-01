@@ -1,5 +1,6 @@
 import time
 
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import create_engine, Column, Integer, String, \
     MetaData, Table, text, CheckConstraint, BigInteger, \
     DECIMAL, DateTime, func, UniqueConstraint
@@ -58,13 +59,16 @@ class DotaDB:
 
     # 更新或者插入用户授权记录
     def insert_or_update_user_approve(self, tick: str, approve_infos: list[dict]):
-        with self.session.begin_nested():
-            for approve_info in approve_infos:
-                if approve_info.get("tick") != tick:
-                    raise Exception("tick is None or not equal")
-                stmt = insert(self._approve_table(tick)).values(**approve_info)
-                stmt = stmt.on_duplicate_key_update(approve_info)
-                self.session.execute(stmt)
+        try:
+            with self.session.begin_nested():
+                for approve_info in approve_infos:
+                    if approve_info.get("tick") != tick:
+                        raise Exception("tick is None or not equal")
+                    stmt = insert(self._approve_table(tick)).values(**approve_info)
+                    stmt = stmt.on_duplicate_key_update(approve_info)
+                    self.session.execute(stmt)
+        except Exception as e:
+            raise e
 
     # 授权历史记录表
     def _approve_history_table(self, tick: str):
@@ -86,12 +90,15 @@ class DotaDB:
 
     # 插入授权记录
     def insert_approve_history(self, tick: str, approve_infos: list[dict]):
-        with self.session.begin_nested():
-            for approve_info in approve_infos:
-                if approve_info.get("tick") != tick:
-                    raise Exception("tick is None or not equal")
-                stmt = insert(self._approve_history_table(tick)).values(**approve_info)
-                self.session.execute(stmt)
+        try:
+            with self.session.begin_nested():
+                for approve_info in approve_infos:
+                    if approve_info.get("tick") != tick:
+                        raise Exception("tick is None or not equal")
+                    stmt = insert(self._approve_history_table(tick)).values(**approve_info)
+                    self.session.execute(stmt)
+        except Exception as e:
+            raise e
 
     # 获取授权金额
     def get_user_approve_amount(self, tick: str, user: str, from_: str):
@@ -102,10 +109,13 @@ class DotaDB:
 
     # 插入或者更新索引器状态
     def insert_or_update_indexer_status(self, status: dict):
-        with self.session.begin_nested():
-            stmt = insert(self._indexer_status_table()).values(**status)
-            stmt = stmt.on_duplicate_key_update(status)
-            self.session.execute(stmt)
+        try:
+            with self.session.begin_nested():
+                stmt = insert(self._indexer_status_table()).values(**status)
+                stmt = stmt.on_duplicate_key_update(status)
+                self.session.execute(stmt)
+        except SQLAlchemyError as e:
+            raise e
 
     # 获取索引器状态
     def get_indexer_status(self, p: str):
@@ -129,16 +139,18 @@ class DotaDB:
 
     # 更新（或者插入）用户tick资产
     def insert_or_update_user_currency_balance(self, tick: str, balance_infos: list[dict]):
-
-        with self.session.begin_nested():
-            for balance_info in balance_infos:
-                if balance_info.get("tick") != tick:
-                    raise Exception("tick is None or not equal")
-                # with self.session.begin_nested():
-                table = self._currency_table(balance_info["tick"])
-                stmt = insert(table).values(balance_info)
-                stmt = stmt.on_duplicate_key_update(balance_info)
-                self.session.execute(stmt)
+        try:
+            with self.session.begin_nested():
+                for balance_info in balance_infos:
+                    if balance_info.get("tick") != tick:
+                        raise Exception("tick is None or not equal")
+                    # with self.session.begin_nested():
+                    table = self._currency_table(balance_info["tick"])
+                    stmt = insert(table).values(balance_info)
+                    stmt = stmt.on_duplicate_key_update(balance_info)
+                    self.session.execute(stmt)
+        except Exception as e:
+            raise e
 
     def _transfer_table(self, tick: str):
         return Table(tick + "_transfer", self.metadata,
@@ -164,14 +176,17 @@ class DotaDB:
 
     # 插入用户tick转账记录
     def insert_transfer_info(self, tick: str, transfer_infos: list[dict]):
-        with self.session.begin_nested():
-            for transfer_info in transfer_infos:
-                if transfer_info.get("tick") != tick:
-                    raise Exception("tick is None or not equal")
-                if transfer_info.get("amount") == 0:
-                    raise Exception("amount is 0")
-                stmt = insert(self._transfer_table(tick)).values(**transfer_info)
-                self.session.execute(stmt)
+        try:
+            with self.session.begin_nested():
+                for transfer_info in transfer_infos:
+                    if transfer_info.get("tick") != tick:
+                        raise Exception("tick is None or not equal")
+                    if transfer_info.get("amount") == 0:
+                        raise Exception("amount is 0")
+                    stmt = insert(self._transfer_table(tick)).values(**transfer_info)
+                    self.session.execute(stmt)
+        except SQLAlchemyError as e:
+            raise e
 
     # 部署表
     def _deploy_table(self):
@@ -209,9 +224,12 @@ class DotaDB:
 
     # 插入部署信息
     def insert_deploy_info(self, deploy_info: dict):
-        with self.session.begin_nested():
-            stmt = insert(self.deploy_table).values(**deploy_info)
-            self.session.execute(stmt)
+        try:
+            with self.session.begin_nested():
+                stmt = insert(self.deploy_table).values(**deploy_info)
+                self.session.execute(stmt)
+        except SQLAlchemyError as e:
+            raise e
 
     # mint table
     def _mint_table(self, tick: str):
@@ -237,33 +255,33 @@ class DotaDB:
 
     # 插入用户mint记录
     def insert_mint_info(self, tick: str, mint_infos: list[dict]):
-        with self.session.begin_nested():
-            for mint_info in mint_infos:
-                if mint_info.get("tick") != tick:
-                    raise Exception("tick is None or not equal")
-                if mint_info.get("lim") == 0:
-                    raise Exception("lim is 0")
-                stmt = insert(self._mint_table(mint_info["tick"])).values(**mint_info)
-                self.session.execute(stmt)
+        try:
+            with self.session.begin_nested():
+                for mint_info in mint_infos:
+                    if mint_info.get("tick") != tick:
+                        raise Exception("tick is None or not equal")
+                    if mint_info.get("lim") == 0:
+                        raise Exception("lim is 0")
+                    stmt = insert(self._mint_table(mint_info["tick"])).values(**mint_info)
+                    self.session.execute(stmt)
+        except Exception as e:
+            raise e
 
     # 部署成功后 给tick添加对应的表
     def create_tables_for_new_tick(self, tick: str):
-        # 创建currency表
-        currency_table = self._currency_table(tick)
-        # 创建mint表
-        mint_table = self._mint_table(tick)
-        approve_table = self._approve_table(tick)
-        approve_history_table = self._approve_history_table(tick)
-        transfer_table = self._transfer_table(tick)
-        self.deploy_table = self._deploy_table()
-        self.indexer_status_table = self._indexer_status_table()
-        self.metadata.create_all(bind=self.engine)
-
-    # def select(self):
-    #     se = self.table.select()
-    #     result = self.session.execute(se).fetchall()
-    #     print("r:", result)
-    #
+        try:
+            # 创建currency表
+            currency_table = self._currency_table(tick)
+            # 创建mint表
+            mint_table = self._mint_table(tick)
+            approve_table = self._approve_table(tick)
+            approve_history_table = self._approve_history_table(tick)
+            transfer_table = self._transfer_table(tick)
+            self.deploy_table = self._deploy_table()
+            self.indexer_status_table = self._indexer_status_table()
+            self.metadata.create_all(bind=self.engine)
+        except SQLAlchemyError as e:
+            raise e
 
     # 删除所有tick有关的表格中的数据
     def delete_all_tick_table(self, tick: str):
