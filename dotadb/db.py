@@ -78,6 +78,7 @@ class DotaDB:
                      Column("from", String(64), nullable=False, primary_key=True),
                      Column("tick", String(8), default=tick, nullable=False),
                      Column("amount", DECIMAL(64, 18), nullable=False),
+                     Column("memo_remark", String(1024), nullable=True),
                      
                      Column("block_height", Integer, nullable=False, primary_key=True),
                      Column("block_hash", String(66), nullable=False),
@@ -170,6 +171,7 @@ class DotaDB:
                      Column("to", String(64), nullable=False, primary_key=True),
                      Column("tick", String(8), default=tick, nullable=False),
                      Column("type", Integer, default=0, nullable=False), # 0是transfer 1是transferFrom
+                     Column("memo_remark", String(1024), nullable=True),
                      UniqueConstraint("block_height", "extrinsic_index", "batchall_index", "remark_index"),
                      extend_existing=True
                      )
@@ -212,6 +214,7 @@ class DotaDB:
                      Column("max", DECIMAL(64, 18)),
                      Column("lim", DECIMAL(64, 18)),
                      Column("admin", String(64)),
+                     Column("memo_remark", String(1024), nullable=True),
                      UniqueConstraint("block_height", "extrinsic_index", "batchall_index", "remark_index"),
                      extend_existing=True
                      )
@@ -249,6 +252,7 @@ class DotaDB:
                      Column("tick", String(8), default=tick, nullable=False),
                      Column("to", String(64), nullable=False, primary_key=True),
                      Column("lim", DECIMAL(64, 18)),
+                     Column("memo_remark", String(1024), nullable=True),
                      UniqueConstraint("block_height", "extrinsic_index", "batchall_index", "remark_index"),
                      extend_existing=True
                      )
