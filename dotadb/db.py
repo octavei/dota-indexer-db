@@ -307,21 +307,35 @@ class DotaDB:
 
     # drop所有tick有关的表格
     def drop_all_tick_table(self, tick: str):
-        # 创建currency表
-        # with self.session.begin_nested():
-        self._currency_table(tick).drop(bind=self.engine)
-        # 创建mint表
-        self._mint_table(tick).drop(bind=self.engine)
-        self._approve_table(tick).drop(bind=self.engine)
-        self._approve_history_table(tick).drop(bind=self.engine)
-        self._transfer_table(tick).drop(bind=self.engine)
-        # self.session.execute(currency_table.delete())
-        # self.session.execute(mint_table.delete())
-        # self.session.execute(approve_table.delete())
-        # self.session.execute(approve_history_table.delete())
-        # self.session.execute(transfer_table.delete())
-        self.indexer_status_table.drop(bind=self.engine)
-        self.deploy_table.drop(bind=self.engine)
+        try:
+            self._currency_table(tick).drop(bind=self.engine)
+        except Exception as e:
+            pass
+        try:
+            self._mint_table(tick).drop(bind=self.engine)
+        except Exception as e:
+            pass
+
+        try:
+            self._approve_table(tick).drop(bind=self.engine)
+        except Exception as e:
+            pass
+        try:
+            self._approve_history_table(tick).drop(bind=self.engine)
+        except Exception as e:
+            pass
+        try:
+            self._transfer_table(tick).drop(bind=self.engine)
+        except Exception as e:
+            pass
+        try:
+            self.indexer_status_table.drop(bind=self.engine)
+        except Exception as e:
+            pass
+        try:
+            self.deploy_table.drop(bind=self.engine)
+        except Exception as e:
+            pass
 
     def close(self):
         self.session.close()
