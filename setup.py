@@ -37,6 +37,4 @@ setup(
         'websocket-client==1.7.0',
         'xxhash==3.4.1'
 ],
-
-    # 其他设置...
 )
